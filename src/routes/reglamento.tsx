@@ -29,34 +29,38 @@ const SECTIONS: Section[] = [
     title: "1. Formato de Competencia y Puntuación",
     rules: [
       { id: "r11", title: "Sistema de juego", body: [
-        "El torneo se disputa en fase regular todos contra todos, seguido por playoffs eliminatorios entre los cuatro mejores clasificados.",
-        "Cada partido se juega al mejor de 5 sets. Los primeros 4 sets terminan a 25 puntos (con 2 de diferencia); el 5° set se juega a 15 puntos con 2 de diferencia.",
+        "Fase Regular: Se disputa bajo el formato todos contra todos. Cada partido se jugará al mejor de 3 sets (los primeros dos a 25 puntos, eventual tercero a 15 puntos, siempre con diferencia de 2).",
+        "Playoffs (Semifinal y Final): Clasifican los 4 mejores de la tabla. Los partidos de esta fase se jugarán al mejor de 5 sets (primeros cuatro a 25 puntos, eventual quinto a 15 puntos, siempre con diferencia de 2).",
       ]},
-      { id: "r12", title: "Sistema de puntuación", body: [
-        "Victoria 3-0 o 3-1: 3 puntos al ganador, 0 al perdedor.",
-        "Victoria 3-2: 2 puntos al ganador, 1 al perdedor.",
-        "Empate en puntos se define por: 1) Ratio de sets (SF/SC), 2) Ratio de puntos (PF/PC), 3) resultado directo.",
+      { id: "r12", title: "Sistema de puntuación en Tabla", body: [
+        "Victoria 2-0: Otorga 3 puntos al ganador y 0 al perdedor.",
+        "Victoria 2-1: Otorga 2 puntos al ganador y 1 al perdedor.",
+        "Criterios de Desempate: En caso de igualdad de puntos, la tabla se definirá en el siguiente orden estricto: 1) Mayor cantidad de partidos ganados, 2) Ratio de Sets (Sets a favor / Sets en contra), 3) Ratio de Puntos (Puntos a favor / Puntos en contra), 4) Resultado del partido directo entre los involucrados.",
       ]},
     ],
   },
   {
     id: "s2",
-    title: "2. Inscripciones, Suplantaciones y Carnet de Cancha",
+    title: "2. Planilla O-2 bis, Inscripciones y Carnet",
     rules: [
-      { id: "r21", title: "Inscripción de jugadores", body: [
-        "Cada club deberá presentar su nómina oficial antes del inicio del campeonato.",
-        "La nómina puede tener hasta 14 jugadores, incluyendo obligatoriamente 2 líberos.",
+      { id: "r21", title: "Inscripción y Planilla O-2 bis", body: [
+        "Es estrictamente obligatorio el uso del formulario oficial O-2 bis para presentar la nómina del equipo antes del inicio de cada partido.",
+        "Para que un partido sea oficial y no se declare W.O., un equipo debe presentarse con un mínimo de 6 jugadores en cancha.",
+        "El máximo de jugadores habilitados por nómina para un encuentro es de 14 (incluyendo los líberos).",
       ]},
       { id: "r22", title: "Suplantación de identidad", body: [
-        "Toda suplantación conlleva la pérdida automática del partido (W.O.) y sanción al club por 2 fechas.",
+        "Toda suplantación conlleva la pérdida automática del partido (W.O.) y una sanción al club involucrado por 2 fechas.",
         "La mesa de control validará la identidad mediante el Carnet Digital de Cancha disponible en esta plataforma.",
       ]},
     ],
   },
   {
     id: "s3",
-    title: "3. Indumentaria y Reglas del Líbero",
+    title: "3. Cancha, Indumentaria y Reglas del Líbero",
     rules: [
+      { id: "r30", title: "Altura de la red", body: [
+        "La altura oficial de la red para todos los encuentros del torneo será de 2.43 metros.",
+      ]},
       { id: "r31", title: "Uniforme", body: [
         "Todos los jugadores de campo deben vestir camiseta idéntica con número visible en pecho y espalda.",
       ]},
@@ -64,7 +68,7 @@ const SECTIONS: Section[] = [
         "El Líbero debe usar una camiseta de color contrastante con la del resto del equipo.",
         "Solo puede jugar en la zona de defensa (zaguero). No puede sacar, bloquear ni intentar bloquear.",
         "No puede atacar completando un balón sobre el borde superior de la red.",
-        "Se permite hasta 2 líberos por equipo por partido.",
+        "Se permite inscribir hasta 2 líberos por equipo por partido.",
       ]},
     ],
   },
@@ -76,12 +80,12 @@ const SECTIONS: Section[] = [
         "Los equipos deben presentarse 30 minutos antes del inicio programado del partido.",
       ]},
       { id: "r42", title: "Atraso y W.O.", body: [
-        "Tolerancia máxima: 15 minutos desde la hora oficial de inicio.",
-        "Superado ese tiempo, se declara W.O. a favor del rival con marcador de 3-0 (25-0, 25-0, 25-0).",
-        "El equipo que reincida en atrasos podrá ser sancionado con descuento de puntos en la tabla.",
+        "Tolerancia máxima: 15 minutos desde la hora oficial de inicio fijada en el calendario.",
+        "Superado ese tiempo, se declara W.O. a favor del rival con marcador máximo en contra (2-0 en fase regular: 25-0, 25-0).",
+        "El equipo que reincida en atrasos o ausencias podrá ser sancionado con el descuento de puntos en la tabla general.",
       ]},
       { id: "r43", title: "Sustituciones", body: [
-        "Cada equipo puede realizar hasta 6 sustituciones por set. Los cambios de líbero son ilimitados y no cuentan como sustitución.",
+        "Cada equipo puede realizar hasta 6 sustituciones por set. Los cambios de líbero son ilimitados y no cuentan como sustitución regular.",
       ]},
     ],
   },
@@ -120,7 +124,7 @@ function Reglamento() {
       <div className="space-y-4">
         <div>
           <h1 className="text-xl font-black uppercase tracking-tight sm:text-2xl">Reglamento oficial</h1>
-          <p className="text-xs text-muted-foreground">Prueba con: "líbero", "W.O.", "atraso", "sustitución".</p>
+          <p className="text-xs text-muted-foreground">Prueba con: "O-2 bis", "W.O.", "red", "desempate".</p>
         </div>
 
         <div className="sticky top-14 z-10 -mx-3 bg-background px-3 py-2 sm:mx-0 sm:px-0">

@@ -38,6 +38,7 @@ export interface Player {
   name: string;
   position: PlayerPosition;
   is_captain: boolean;
+  rut?: string;
 }
 
 export interface SetDetail {

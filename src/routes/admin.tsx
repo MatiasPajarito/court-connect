@@ -84,6 +84,7 @@ function Admin() {
             <TabsTrigger value="digitalizar">Digitalizar</TabsTrigger>
             <TabsTrigger value="programar">Programar</TabsTrigger>
             <TabsTrigger value="equipos">Equipos</TabsTrigger>
+            <TabsTrigger value="jugadores">Planteles</TabsTrigger>
           </TabsList>
         </div>
 
@@ -95,6 +96,9 @@ function Admin() {
         </TabsContent>
         <TabsContent value="equipos" className="mt-0">
           <EquiposTab />
+        </TabsContent>
+        <TabsContent value="jugadores" className="mt-0">
+          <JugadoresTab />
         </TabsContent>
       </Tabs>
     </AppShell>
@@ -212,7 +216,7 @@ function PendingMatchRow({ match, onSelect }: { match: Match; onSelect: () => vo
 }
 
 function ScoreEditor({ match, onClose }: { match: Match; onClose: () => void }) {
-  const { saveResult, teams, deleteMatch } = useStore();
+  const { saveResult, teams, deleteMatch, updateMatchDetails } = useStore();
   
   const home = teams.find((t) => t.id === match.home_team_id) || {
     id: "tbd_h",
@@ -272,7 +276,7 @@ function ScoreEditor({ match, onClose }: { match: Match; onClose: () => void }) 
 
   return (
     <Card className="sticky bottom-20 z-10 mt-3 space-y-4 border-primary p-4 shadow-lg">
-      <div className="flex items-center justify-between">
+      <div className="flex items-center justify-between border-b border-border/40 pb-3">
         <div className="text-sm font-bold uppercase tracking-wide">
           Ingresar marcador {isBestOf5 ? "(Al mejor de 5)" : "(Al mejor de 3)"}
         </div>
@@ -280,16 +284,54 @@ function ScoreEditor({ match, onClose }: { match: Match; onClose: () => void }) 
           Cerrar
         </Button>
       </div>
-      <div className="grid grid-cols-3 items-center gap-2 text-center text-sm">
-        <div className="flex items-center justify-center gap-2 font-bold">
-          <TeamLogo team={home as any} size={28} /> {home.short_name}
-        </div>
-        <div />
-        <div className="flex items-center justify-center gap-2 font-bold">
-          {away.short_name} <TeamLogo team={away as any} size={28} />
-        </div>
+
+      <div className="grid grid-cols-[1fr_auto_1fr] items-center gap-2 text-sm pt-1">
+        <Select
+          value={match.home_team_id}
+          onValueChange={(newId) => {
+            if (newId === match.away_team_id) return toast.error("Local y visita deben ser distintos");
+            updateMatchDetails(match.id, { home_team_id: newId });
+            toast.success("Equipo local actualizado");
+          }}
+        >
+          <SelectTrigger className="h-12 border-dashed bg-muted/30">
+            <div className="flex items-center gap-2 overflow-hidden">
+              <TeamLogo team={home as any} size={24} />
+              <span className="truncate font-bold">{home.short_name}</span>
+            </div>
+          </SelectTrigger>
+          <SelectContent>
+            {teams.map((t) => (
+              <SelectItem key={t.id} value={t.id}>{t.name}</SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
+
+        <div className="text-xs font-black text-muted-foreground px-1">VS</div>
+
+        <Select
+          value={match.away_team_id}
+          onValueChange={(newId) => {
+            if (newId === match.home_team_id) return toast.error("Local y visita deben ser distintos");
+            updateMatchDetails(match.id, { away_team_id: newId });
+            toast.success("Equipo visita actualizado");
+          }}
+        >
+          <SelectTrigger className="h-12 border-dashed bg-muted/30">
+            <div className="flex items-center gap-2 overflow-hidden flex-row-reverse w-full justify-end">
+              <TeamLogo team={away as any} size={24} />
+              <span className="truncate font-bold">{away.short_name}</span>
+            </div>
+          </SelectTrigger>
+          <SelectContent>
+            {teams.map((t) => (
+              <SelectItem key={t.id} value={t.id}>{t.name}</SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
       </div>
-      <div className="space-y-2">
+
+      <div className="space-y-2 mt-4">
         {sets.map((s, i) => (
           <div key={i}>
             <div className="grid grid-cols-[1fr_auto_1fr] items-center gap-2">
@@ -647,6 +689,146 @@ function EquiposTab() {
               </Button>
             </div>
           </form>
+        </Card>
+      )}
+    </div>
+  );
+}
+
+function JugadoresTab() {
+  const { teams, players, saveRoster } = useStore();
+  const [selectedId, setSelectedId] = useState<string>(teams[0]?.id || "");
+  const selectedTeam = teams.find((t) => t.id === selectedId);
+
+  // Generamos siempre 20 espacios fijos
+  const [roster, setRoster] = useState(() => Array.from({ length: 20 }, (_, i) => ({
+    number: i + 1, name: "", rut: "", position: ""
+  })));
+
+  // Cuando cambias de equipo, cargamos sus jugadores en sus respectivos números
+  useEffect(() => {
+    if (!selectedId) return;
+    const teamPlayers = players.filter((p) => p.team_id === selectedId);
+    
+    setRoster(
+      Array.from({ length: 20 }, (_, i) => {
+        const num = i + 1;
+        const existing = teamPlayers.find((p) => p.number === num);
+        return existing 
+          ? { number: num, name: existing.name, rut: existing.rut || "", position: existing.position || "" }
+          : { number: num, name: "", rut: "", position: "" };
+      })
+    );
+  }, [selectedId, players]);
+
+  const updateSlot = (index: number, field: string, value: string) => {
+    setRoster((prev) => {
+      const newRoster = [...prev];
+      newRoster[index] = { ...newRoster[index], [field]: value };
+      return newRoster;
+    });
+  };
+
+  const handleSave = async () => {
+    if (!selectedId) return;
+    try {
+      await saveRoster(selectedId, roster);
+      toast.success(`Planilla O-2 bis de ${selectedTeam?.short_name || 'equipo'} guardada correctamente.`);
+    } catch {
+      toast.error("Error al guardar la nómina en la base de datos.");
+    }
+  };
+
+  return (
+    <div className="grid gap-4 md:grid-cols-[250px_1fr]">
+      <Card className="p-3 space-y-2 h-fit">
+        <Label className="text-xs font-bold uppercase text-muted-foreground">Clubes Inscritos</Label>
+        <div className="flex flex-col gap-1">
+          {teams.map((t) => (
+            <Button
+              key={t.id}
+              variant={t.id === selectedId ? "default" : "ghost"}
+              className="justify-start gap-2 h-10 px-2"
+              onClick={() => setSelectedId(t.id)}
+            >
+              <TeamLogo team={t as any} size={24} />
+              <span className="truncate font-semibold text-sm">{t.short_name || t.name}</span>
+            </Button>
+          ))}
+        </div>
+      </Card>
+
+      {selectedTeam && (
+        <Card className="p-0 overflow-hidden flex flex-col">
+          <div className="flex items-center justify-between border-b p-4 bg-muted/30">
+            <div>
+              <h3 className="font-black text-lg uppercase tracking-tight">Planilla O-2 bis</h3>
+              <p className="text-xs text-muted-foreground">
+                20 cupos habilitados por torneo para <strong className="text-primary">{selectedTeam.name}</strong>.
+              </p>
+            </div>
+            <Button onClick={handleSave} className="font-bold">
+              <Save className="mr-2 h-4 w-4" /> Guardar Nómina
+            </Button>
+          </div>
+
+          <div className="overflow-x-auto">
+            <table className="w-full text-sm text-left">
+              <thead className="bg-muted text-xs uppercase font-bold text-muted-foreground">
+                <tr>
+                  <th className="px-4 py-3 w-16 text-center">N°</th>
+                  <th className="px-4 py-3">Nombre y Apellido</th>
+                  <th className="px-4 py-3 w-40">RUT</th>
+                  <th className="px-4 py-3 w-48">Posición</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y">
+                {roster.map((slot, index) => (
+                  <tr key={slot.number} className="hover:bg-muted/10 transition-colors">
+                    <td className="px-4 py-2 text-center font-mono font-bold text-muted-foreground">
+                      {slot.number}
+                    </td>
+                    <td className="px-4 py-2">
+                      <Input 
+                        placeholder="Ej: Matías Pajarito" 
+                        value={slot.name} 
+                        onChange={(e) => updateSlot(index, "name", e.target.value)}
+                        className="h-8 border-transparent hover:border-input focus:border-input bg-transparent"
+                      />
+                    </td>
+                    <td className="px-4 py-2">
+                      <Input 
+                        placeholder="12.345.678-9" 
+                        value={slot.rut} 
+                        onChange={(e) => updateSlot(index, "rut", e.target.value)}
+                        className="h-8 border-transparent hover:border-input focus:border-input bg-transparent font-mono text-xs"
+                      />
+                    </td>
+                    <td className="px-4 py-2">
+                      <Select value={slot.position} onValueChange={(val) => updateSlot(index, "position", val)}>
+                        <SelectTrigger className="h-8 border-transparent hover:border-input focus:border-input bg-transparent text-xs">
+                          <SelectValue placeholder="Seleccionar..." />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="Armador">Armador</SelectItem>
+                          <SelectItem value="Punta">Punta</SelectItem>
+                          <SelectItem value="Central">Central</SelectItem>
+                          <SelectItem value="Opuesto">Opuesto</SelectItem>
+                          <SelectItem value="Líbero">Líbero</SelectItem>
+                        </SelectContent>
+                      </Select>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+          
+          <div className="p-4 border-t bg-muted/30">
+            <p className="text-xs text-muted-foreground text-center">
+              Los números asignados en esta planilla deben coincidir con las camisetas usadas en cancha. Las casillas vacías no se guardarán en la base de datos.
+            </p>
+          </div>
         </Card>
       )}
     </div>

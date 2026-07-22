@@ -23,6 +23,7 @@ interface StoreCtx {
   deleteMatch: (matchId: string) => Promise<void>;
   updateMatchDetails: (matchId: string, details: Partial<Match>) => Promise<void>;
   updateTeam: (teamId: string, updates: Partial<Team>) => Promise<void>;
+  saveRoster: (teamId: string, rosterData: any[]) => Promise<void>;
 }
 
 const Ctx = createContext<StoreCtx | null>(null);
@@ -192,6 +193,38 @@ export function StoreProvider({ children }: { children: ReactNode }) {
     );
   }, []);
 
+  const saveRoster = useCallback(async (teamId: string, rosterData: any[]) => {
+    // Filtramos solo las filas que tengan al menos el nombre escrito
+    const validPlayers = rosterData.filter((p) => p.name?.trim() !== "");
+    
+    const payload = validPlayers.map((p) => ({
+      id: `${teamId}_${p.number}`, // Generamos un ID único: Equipo + Número
+      team_id: teamId,
+      number: p.number,
+      name: p.name,
+      rut: p.rut || null, // Aseguramos que si está vacío envíe null
+      position: p.position || "Punta", 
+      is_captain: false // Agregamos este campo para cumplir con tu tabla
+    }));
+
+    // 1. Borramos la nómina anterior del equipo para evitar duplicados
+    await supabase.from("players").delete().eq("team_id", teamId);
+
+    // 2. Insertamos la nueva nómina oficial
+    if (payload.length > 0) {
+      const { data, error } = await supabase.from("players").insert(payload).select();
+      if (error) {
+        console.error("Error guardando nómina:", error);
+        throw error;
+      }
+      // Actualizamos la pantalla al instante
+      setPlayers((prev) => [...prev.filter((p) => p.team_id !== teamId), ...data]);
+    } else {
+      // Si borraron a todos, simplemente vaciamos la lista local
+      setPlayers((prev) => prev.filter((p) => p.team_id !== teamId));
+    }
+  }, []);
+
   const value = useMemo<StoreCtx>(
     () => ({
       matches,
@@ -201,6 +234,7 @@ export function StoreProvider({ children }: { children: ReactNode }) {
       deleteMatch,
       updateMatchDetails,
       updateTeam,
+      saveRoster,
       teams,
       players,
       venues,

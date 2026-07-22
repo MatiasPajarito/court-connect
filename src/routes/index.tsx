@@ -155,9 +155,9 @@ function Home() {
               La Copa Mamba es la 1ª versión de la Liga de Voleibol Competitiva:
               seis clubes de distintas ciudades disputan una fase regular
               todos-contra-todos al mejor de 3 sets, clasificando los 4 mejores
-              a semifinales y final al mejor de 5 sets. Los resultados se cargan
-              tras cada jornada y la tabla se recalcula automáticamente por
-              puntos, partidos ganados, set promedio y punto promedio.
+              a playoffs (semifinal y final) al mejor de 5 sets. Los resultados
+              se cargan tras cada jornada y la tabla se recalcula automáticamente
+              priorizando Puntos, Partidos Ganados, Ratio de Sets y Ratio de Puntos.
             </p>
           </Card>
 

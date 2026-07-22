@@ -67,9 +67,6 @@ function Equipos() {
                   <TeamLogo team={open} size={48} />
                   <div className="min-w-0">
                     <DialogTitle className="truncate text-left">{open.name}</DialogTitle>
-                    <DialogDescription className="text-left">
-                      {open.city} · DT: {open.coach}
-                    </DialogDescription>
                   </div>
                 </div>
               </DialogHeader>
