@@ -1,48 +1,54 @@
-import { Building2, Navigation } from "lucide-react";
+import { Navigation, Building2 } from "lucide-react";
 import { Card } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
 import { directionsUrl } from "@/lib/geo";
 import type { Venue } from "@/lib/types";
 
-// Paleta estable por sede (no depende del mapa) para diferenciar los bloques a simple vista.
-const PALETTE = [
-  "from-primary/70 to-primary/30",
-  "from-secondary/80 to-secondary/40",
-  "from-amber-500/70 to-amber-500/30",
-];
-
-function paletteFor(id: string) {
-  let hash = 0;
-  for (const ch of id) hash = (hash * 31 + ch.charCodeAt(0)) >>> 0;
-  return PALETTE[hash % PALETTE.length];
-}
-
-/** Bloque fijo de sede: foto (si existe) o ilustración, nombre, dirección y "Cómo llegar" funcional. */
 export function VenueCard({ venue }: { venue: Venue }) {
+  // Verificamos si la sede tiene foto. Si no tiene, usamos un fondo gris por defecto.
+  const hasImage = Boolean(venue.image_url);
+
   return (
-    <Card className="overflow-hidden p-0">
+    <Card className="flex h-full flex-col overflow-hidden shadow-sm transition-shadow hover:shadow-md">
+      {/* ZONA DE LA FOTO */}
       <div
-        className={`flex h-28 items-center justify-center bg-gradient-to-br ${paletteFor(venue.id)}`}
+        className={`relative flex h-36 items-center justify-center ${!hasImage ? "bg-muted" : ""}`}
+        style={
+          hasImage
+            ? {
+                backgroundImage: `url(${venue.image_url})`,
+                backgroundSize: "cover",
+                backgroundPosition: "center",
+              }
+            : undefined
+        }
       >
-        {venue.photo_url ? (
-          <img src={venue.photo_url} alt={venue.name} className="h-full w-full object-cover" />
-        ) : (
-          <Building2 className="h-10 w-10 text-primary-foreground/90" />
-        )}
+        {/* Filtro oscuro sobre la foto para que no desentone con el diseño general */}
+        {hasImage && <div className="absolute inset-0 bg-black/30 mix-blend-multiply" />}
+        
+        {/* Si no hay foto, mostramos el ícono del edificio en grande */}
+        {!hasImage && <Building2 className="h-10 w-10 text-muted-foreground/30" />}
       </div>
-      <div className="space-y-2 p-3">
+
+      {/* ZONA DE TEXTO Y BOTÓN */}
+      <div className="flex flex-1 flex-col justify-between p-4">
         <div>
-          <div className="truncate text-sm font-bold">{venue.name}</div>
-          <div className="truncate text-xs text-muted-foreground">{venue.address}</div>
-          <div className="text-xs text-muted-foreground">{venue.city}</div>
+          <h3 className="text-sm font-black leading-tight tracking-tight text-foreground">
+            {venue.name}
+          </h3>
+          <p className="mt-1 text-xs text-muted-foreground">
+            {venue.address}
+            <br />
+            {venue.city}
+          </p>
         </div>
-        <a
-          href={directionsUrl(venue)}
-          target="_blank"
-          rel="noreferrer"
-          className="inline-flex w-full items-center justify-center gap-1.5 rounded-md bg-primary px-3 py-2 text-xs font-bold uppercase tracking-wide text-primary-foreground hover:bg-primary/90"
-        >
-          <Navigation className="h-3.5 w-3.5" /> Cómo llegar
-        </a>
+        <div className="mt-4">
+          <Button asChild className="w-full font-bold" size="sm">
+            <a href={directionsUrl(venue)} target="_blank" rel="noreferrer">
+              <Navigation className="mr-2 h-4 w-4" /> Cómo llegar
+            </a>
+          </Button>
+        </div>
       </div>
     </Card>
   );

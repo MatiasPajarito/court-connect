@@ -16,8 +16,7 @@ export interface Venue {
   address: string;
   city: string;
   coordinates: { lat: number; lng: number };
-  /** Foto opcional del gimnasio (fachada). Si no está, se muestra un bloque ilustrado. */
-  photo_url?: string;
+  image_url?: string;
 }
 
 export interface Team {
