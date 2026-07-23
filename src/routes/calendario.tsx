@@ -188,40 +188,40 @@ function FechaGroup({
 
   return (
     <div className="space-y-3">
-      <div className="flex flex-col gap-2 border-b-2 border-primary/40 pb-2 sm:flex-row sm:items-center sm:justify-between">
-        <div className="flex items-center justify-between">
+      {/* Contenedor reorganizado para mobile y desktop */}
+      <div className="flex flex-col gap-3 border-b-2 border-primary/40 pb-3 sm:flex-row sm:items-center sm:justify-between">
+        
+        {/* Bloque Izquierdo: Título y Sedes */}
+        <div className="flex flex-col items-start gap-2">
           <h3 className="text-lg font-black uppercase tracking-tight sm:text-xl">
             Fecha {matchday}
             {isPlayoffs && <span className="ml-2 text-sm font-bold text-primary">Playoffs</span>}
           </h3>
-          {/* Botón visible solo en celulares al lado del título de la fecha */}
-          <div className="sm:hidden">
-            <ShareSchedule matchday={matchday} matches={matches} />
+
+          <div className="flex flex-wrap items-center gap-2">
+            {venuesInGroup.map((v) => (
+              <div
+                key={v.id}
+                className="inline-flex items-center gap-1 rounded-full border border-primary/40 bg-primary/5 px-2.5 py-1 text-[11px] font-semibold text-muted-foreground"
+              >
+                <MapPin className="h-3 w-3 shrink-0 text-primary" />
+                <span className="max-w-[10rem] truncate">{v.name}</span>
+                <a
+                  href={directionsUrl(v)}
+                  target="_blank"
+                  rel="noreferrer"
+                  className="ml-1 inline-flex items-center gap-0.5 text-primary underline-offset-2 hover:underline"
+                >
+                  <Navigation className="h-3 w-3" /> Cómo llegar
+                </a>
+              </div>
+            ))}
           </div>
         </div>
 
-        <div className="flex flex-wrap items-center gap-2">
-          {venuesInGroup.map((v) => (
-            <div
-              key={v.id}
-              className="inline-flex items-center gap-1 rounded-full border border-primary/40 bg-primary/5 px-2.5 py-1 text-[11px] font-semibold text-muted-foreground"
-            >
-              <MapPin className="h-3 w-3 shrink-0 text-primary" />
-              <span className="max-w-[10rem] truncate">{v.name}</span>
-              <a
-                href={directionsUrl(v)}
-                target="_blank"
-                rel="noreferrer"
-                className="ml-1 inline-flex items-center gap-0.5 text-primary underline-offset-2 hover:underline"
-              >
-                <Navigation className="h-3 w-3" /> Cómo llegar
-              </a>
-            </div>
-          ))}
-          {/* Botón visible en escritorio al lado de las sedes de esa fecha */}
-          <div className="hidden sm:block">
-            <ShareSchedule matchday={matchday} matches={matches} />
-          </div>
+        {/* Bloque Derecho: Botón de compartir adaptado a 100% de ancho en móviles */}
+        <div className="w-full sm:w-auto [&_button]:w-full">
+          <ShareSchedule matchday={matchday} matches={matches} />
         </div>
       </div>
 
