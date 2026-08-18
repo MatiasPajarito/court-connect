@@ -14,16 +14,23 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { useStore } from "@/lib/store";
+import { categoryLabel, matchCategory, teamCategory } from "@/lib/category";
 import type { Match, Venue } from "@/lib/types";
 
 export const Route = createFileRoute("/calendario")({
   component: Calendario,
   head: () => ({
     meta: [
-      { title: "Calendario y Sedes · Copa Interurbana" },
+      { title: "Calendario y Sedes · LIVOCOM" },
       {
         name: "description",
         content: "Filtra el calendario por club, revisa sedes y obtén indicaciones GPS.",
+      },
+      { property: "og:title", content: "Calendario y Sedes · LIVOCOM" },
+      {
+        property: "og:description",
+        content:
+          "Fechas, horarios y recintos de LIVOCOM en Melipilla, San Antonio y Curacaví.",
       },
     ],
   }),
@@ -35,9 +42,18 @@ function matchdayKey(m: Match) {
 }
 
 function Calendario() {
-  const { matches, teams, venues } = useStore();
+  const { matches: allMatches, teams: allTeams, venues, selectedCategory } = useStore();
   const [teamId, setTeamId] = useState<string>("all");
   const [fechaKey, setFechaKey] = useState<string>("all");
+
+  const teams = useMemo(
+    () => allTeams.filter((t) => teamCategory(t) === selectedCategory),
+    [allTeams, selectedCategory],
+  );
+  const matches = useMemo(
+    () => allMatches.filter((m) => matchCategory(m, allTeams) === selectedCategory),
+    [allMatches, allTeams, selectedCategory],
+  );
 
   // Opciones de fecha calculadas sobre TODOS los partidos (no sobre el filtro de equipo),
   // para que el filtro de fecha no cambie de opciones al elegir un club.
@@ -93,7 +109,8 @@ function Calendario() {
             Calendario y sedes
           </h1>
           <p className="text-xs text-muted-foreground">
-            Filtra por club o por fecha para ver solo lo que te interesa.
+            {categoryLabel(selectedCategory)} · Filtra por club o por fecha para ver solo
+            lo que te interesa.
           </p>
         </div>
 
