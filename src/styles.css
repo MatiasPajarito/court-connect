@@ -148,3 +148,21 @@
     color: var(--color-foreground);
   }
 }
+
+/* Rama Damas TC: acento rosa/magenta deportivo. */
+[data-category="damas"] {
+  --primary: oklch(0.62 0.22 5);
+  --primary-foreground: oklch(0.99 0 0);
+  --accent: oklch(0.62 0.22 5);
+  --accent-foreground: oklch(0.99 0 0);
+  --ring: oklch(0.62 0.22 5);
+}
+
+[data-category="damas"].dark,
+[data-category="damas"] .dark {
+  --primary: oklch(0.68 0.21 5);
+  --primary-foreground: oklch(0.99 0 0);
+  --accent: oklch(0.68 0.21 5);
+  --accent-foreground: oklch(0.99 0 0);
+  --ring: oklch(0.68 0.21 5);
+}
