@@ -14,8 +14,10 @@ export const Route = createFileRoute("/reglamento")({
   component: Reglamento,
   head: () => ({
     meta: [
-      { title: "Reglamento · Copa Interurbana" },
-      { name: "description", content: "Bases oficiales del campeonato, en formato nativo y con búsqueda instantánea." },
+      { title: "Reglamento Oficial · LIVOCOM" },
+      { name: "description", content: "Bases oficiales de LIVOCOM: 8 equipos por categoría, 7 fechas todos contra todos, premios y clasificación al Torneo de Verano 2027." },
+      { property: "og:title", content: "Reglamento Oficial · LIVOCOM" },
+      { property: "og:description", content: "Formato, puntuación, premios y bases oficiales de la Liga de Voleibol Competitiva." },
     ],
   }),
 });
@@ -29,13 +31,26 @@ const SECTIONS: Section[] = [
     title: "1. Formato de Competencia y Puntuación",
     rules: [
       { id: "r11", title: "Sistema de juego", body: [
-        "Fase Regular: Se disputa bajo el formato todos contra todos. Cada partido se jugará al mejor de 3 sets (los primeros dos a 25 puntos, eventual tercero a 15 puntos, siempre con diferencia de 2).",
+        "Categorías: LIVOCOM se disputa en dos ramas independientes, Varón TC y Damas TC, con 8 equipos inscritos en cada categoría.",
+        "Fase Regular: 7 fechas bajo formato todos contra todos (cada club enfrenta una vez a los otros 7). Cada partido se jugará al mejor de 3 sets (los primeros dos a 25 puntos, eventual tercero a 15 puntos, siempre con diferencia de 2).",
         "Playoffs (Semifinal y Final): Clasifican los 4 mejores de la tabla. Los partidos de esta fase se jugarán al mejor de 5 sets (primeros cuatro a 25 puntos, eventual quinto a 15 puntos, siempre con diferencia de 2).",
+        "Inicio oficial del campeonato: Septiembre 2026.",
       ]},
       { id: "r12", title: "Sistema de puntuación en Tabla", body: [
         "Victoria 2-0: Otorga 3 puntos al ganador y 0 al perdedor.",
         "Victoria 2-1: Otorga 2 puntos al ganador y 1 al perdedor.",
         "Criterios de Desempate: En caso de igualdad de puntos, la tabla se definirá en el siguiente orden estricto: 1) Mayor cantidad de partidos ganados, 2) Ratio de Sets (Sets a favor / Sets en contra), 3) Ratio de Puntos (Puntos a favor / Puntos en contra), 4) Resultado del partido directo entre los involucrados.",
+      ]},
+      { id: "r13", title: "Premiación y clasificación", body: [
+        "Premios en efectivo ($$) para los dos primeros lugares de cada categoría.",
+        "Copa y medallas para el 1° y 2° lugar de Varón TC y Damas TC.",
+        "Premio MVP por jornada en cada categoría.",
+        "Los 2 primeros lugares de cada categoría clasifican de forma directa al Torneo de Verano 2027.",
+      ]},
+      { id: "r14", title: "Localía, medios y contacto", body: [
+        "Los clubes socios pueden solicitar la localía de una fecha y autogestionar la venta de entradas de ese encuentro.",
+        "Registro fotográfico oficial rotativo para todos los clubes y transmisión/resúmenes en el Canal Oficial de YouTube de la liga.",
+        "Bases oficiales y consultas: WhatsApp +569 7420 3763 · Instagram @volleyball.melipilla.",
       ]},
     ],
   },
