@@ -2,6 +2,8 @@ import { Link, useRouterState } from "@tanstack/react-router";
 import { CalendarDays, ClipboardList, Home, Trophy, Users } from "lucide-react";
 import type { ReactNode } from "react";
 import { cn } from "@/lib/utils";
+import { useStore } from "@/lib/store";
+import { CATEGORIES } from "@/lib/category";
 
 const NAV = [
   { to: "/", label: "Inicio", icon: Home },
@@ -13,11 +15,12 @@ const NAV = [
 
 export function AppShell({ children }: { children: ReactNode }) {
   const pathname = useRouterState({ select: (s) => s.location.pathname });
+  const { selectedCategory, setSelectedCategory } = useStore();
 
   return (
-    <div className="min-h-screen bg-background pb-20">
+    <div data-category={selectedCategory} className="min-h-screen bg-background pb-20">
       <header className="sticky top-0 z-20 border-b bg-secondary text-secondary-foreground shadow-sm">
-        <div className="mx-auto flex max-w-5xl items-center gap-3 px-4 py-3">
+        <div className="mx-auto flex max-w-5xl flex-wrap items-center gap-3 px-4 py-3">
           <Link
             to="/"
             className="flex min-w-0 items-center gap-3 rounded-md transition-opacity hover:opacity-80"
@@ -32,13 +35,37 @@ export function AppShell({ children }: { children: ReactNode }) {
             </div>
             <div className="min-w-0">
               <div className="truncate text-sm font-black uppercase tracking-wide">
-                Copa Mamba
+                LIVOCOM
               </div>
               <div className="truncate text-[11px] text-secondary-foreground/70">
-                Voleibol Interurbano · 2026
+                Liga de Voleibol Competitiva · Sept. 2026
               </div>
             </div>
           </Link>
+
+          <div
+            role="tablist"
+            aria-label="Categoría del torneo"
+            className="ml-auto flex shrink-0 rounded-full border border-primary/40 bg-black/25 p-0.5"
+          >
+            {CATEGORIES.map((c) => (
+              <button
+                key={c.value}
+                type="button"
+                role="tab"
+                aria-selected={selectedCategory === c.value}
+                onClick={() => setSelectedCategory(c.value)}
+                className={cn(
+                  "rounded-full px-3 py-1.5 text-[11px] font-black uppercase tracking-wide transition-colors",
+                  selectedCategory === c.value
+                    ? "bg-primary text-primary-foreground"
+                    : "text-secondary-foreground/70 hover:text-secondary-foreground",
+                )}
+              >
+                {c.label}
+              </button>
+            ))}
+          </div>
         </div>
       </header>
 

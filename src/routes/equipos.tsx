@@ -13,21 +13,28 @@ import {
   DialogDescription,
 } from "@/components/ui/dialog";
 import { useStore } from "@/lib/store";
+import { categoryLabel, teamCategory } from "@/lib/category";
 import type { Team } from "@/lib/types";
 
 export const Route = createFileRoute("/equipos")({
   component: Equipos,
   head: () => ({
     meta: [
-      { title: "Clubes y Carnet Digital · Copa Interurbana" },
+      { title: "Clubes y Carnet Digital · LIVOCOM" },
       { name: "description", content: "Plantillas oficiales de cada club para verificación arbitral." },
+      { property: "og:title", content: "Clubes y Planteles · LIVOCOM" },
+      {
+        property: "og:description",
+        content: "Clubes inscritos y carnet digital de cancha de LIVOCOM.",
+      },
     ],
   }),
 });
 
 function Equipos() {
-  const { teams, players } = useStore();
+  const { teams: allTeams, players, selectedCategory } = useStore();
   const [open, setOpen] = useState<Team | null>(null);
+  const teams = allTeams.filter((t) => teamCategory(t) === selectedCategory);
 
   const roster = open ? players.filter((p) => p.team_id === open.id).sort((a, b) => a.number - b.number) : [];
 
@@ -36,8 +43,16 @@ function Equipos() {
       <div className="space-y-4">
         <div>
           <h1 className="text-xl font-black uppercase tracking-tight sm:text-2xl">Clubes participantes</h1>
-          <p className="text-xs text-muted-foreground">Selecciona un club para ver su carnet digital de cancha.</p>
+          <p className="text-xs text-muted-foreground">
+            {categoryLabel(selectedCategory)} · Selecciona un club para ver su carnet digital de cancha.
+          </p>
         </div>
+
+        {teams.length === 0 && (
+          <div className="rounded-lg border bg-card p-4 text-sm text-muted-foreground">
+            Aún no hay clubes inscritos en {categoryLabel(selectedCategory)}.
+          </div>
+        )}
 
         <div className="grid grid-cols-2 gap-3 sm:grid-cols-3">
           {teams.map((t) => (

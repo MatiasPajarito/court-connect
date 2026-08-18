@@ -6,17 +6,23 @@ import { StandingsTable } from "@/components/standings-table";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { useStore } from "@/lib/store";
 import { computeStandings } from "@/lib/standings";
+import { categoryLabel, matchCategory, teamCategory } from "@/lib/category";
 import type { Match } from "@/lib/types";
 import { PlayoffBracket } from "@/components/playoff-bracket"; // <-- AGREGA ESTA LÍNEA ARRIBA
 
 export const Route = createFileRoute("/posiciones")({
   head: () => ({
     meta: [
-      { title: "Posiciones y Resultados · Copa Mamba" },
+      { title: "Posiciones y Resultados · LIVOCOM" },
       {
         name: "description",
         content:
-          "Tabla de posiciones, resultados y próximos partidos de la Copa Mamba de Voleibol.",
+          "Tabla de posiciones, resultados y próximos partidos de LIVOCOM, Liga de Voleibol Competitiva.",
+      },
+      { property: "og:title", content: "Posiciones · LIVOCOM" },
+      {
+        property: "og:description",
+        content: "Tabla de posiciones en vivo de Varón TC y Damas TC de LIVOCOM.",
       },
     ],
   }),
@@ -24,12 +30,21 @@ export const Route = createFileRoute("/posiciones")({
 });
 
 function Posiciones() {
-  const { matches, teams } = useStore();
+  const { matches, teams: allTeams, selectedCategory } = useStore();
   const [phase, setPhase] = useState<"regular" | "playoffs">("regular");
 
+  const teams = useMemo(
+    () => allTeams.filter((t) => teamCategory(t) === selectedCategory),
+    [allTeams, selectedCategory],
+  );
+  const catMatches = useMemo(
+    () => matches.filter((m) => matchCategory(m, allTeams) === selectedCategory),
+    [matches, allTeams, selectedCategory],
+  );
+
   const standings = useMemo(
-    () => computeStandings(teams, matches),
-    [teams, matches],
+    () => computeStandings(teams, catMatches),
+    [teams, catMatches],
   );
 
   // Un solo resultado por fecha (el último partido jugado de esa jornada), para no
@@ -37,7 +52,7 @@ function Posiciones() {
   // más reciente a la más antigua.
   const lastResultPerFecha = useMemo(() => {
     const byMatchday = new Map<number, Match>();
-    for (const m of matches) {
+    for (const m of catMatches) {
       if (m.phase !== phase || m.status !== "finished") continue;
       const current = byMatchday.get(m.matchday);
       if (!current || m.datetime > current.datetime) {
@@ -47,7 +62,7 @@ function Posiciones() {
     return Array.from(byMatchday.values()).sort(
       (a, b) => b.matchday - a.matchday,
     );
-  }, [matches, phase]);
+  }, [catMatches, phase]);
 
   return (
     <AppShell>
@@ -58,7 +73,8 @@ function Posiciones() {
               Tabla de posiciones
             </h1>
             <p className="text-xs text-muted-foreground">
-              Ordenada por Pts · Ratio de sets · Diferencia de puntos (PF − PC)
+              {categoryLabel(selectedCategory)} · Ordenada por Pts · Ratio de sets ·
+              Diferencia de puntos (PF − PC)
             </p>
           </div>
           <Tabs

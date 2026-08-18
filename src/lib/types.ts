@@ -28,6 +28,8 @@ export interface Team {
   coach: string;
   /** Logo real del club. Si no está, se muestra el círculo con sus iniciales. */
   logo_url?: string;
+  /** Rama del torneo. Si no está definida se asume "varon". */
+  category?: "varon" | "damas";
 }
 
 export interface Player {
@@ -58,6 +60,8 @@ export interface Match {
   home_team_id: string;
   away_team_id: string;
   venue_id: string;
+  /** Rama del torneo. Si no está definida se deduce del club local. */
+  category?: "varon" | "damas";
   score: {
     home_sets: number;
     away_sets: number;
