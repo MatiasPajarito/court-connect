@@ -9,10 +9,13 @@ import {
 } from "react";
 import { supabase } from "./supabase";
 import { sponsors } from "./mock-data";
+import type { Category } from "./category";
 import type { Match, SetDetail, Team, Player, Venue, MatchScore } from "./types";
 
 interface StoreCtx {
   matches: Match[];
+  selectedCategory: Category;
+  setSelectedCategory: (cat: Category) => void;
   addMatch: (m: Omit<Match, "id" | "score" | "status">) => Promise<void>;
   saveResult: (id: string, setDetails: SetDetail[]) => Promise<void>;
   resetData: () => Promise<void>;
@@ -43,6 +46,13 @@ export function StoreProvider({ children }: { children: ReactNode }) {
   const [teams, setTeams] = useState<Team[]>([]);
   const [players, setPlayers] = useState<Player[]>([]);
   const [venues, setVenues] = useState<Venue[]>([]);
+  const [selectedCategory, setSelectedCategory] = useState<Category>("varon");
+
+  // Aplica la paleta de la rama activa a todo el documento (incluye portales/diálogos).
+  useEffect(() => {
+    if (typeof document === "undefined") return;
+    document.documentElement.setAttribute("data-category", selectedCategory);
+  }, [selectedCategory]);
 
   // 1. Cargar datos iniciales desde Supabase al montar el Provider
   useEffect(() => {
@@ -103,11 +113,17 @@ export function StoreProvider({ children }: { children: ReactNode }) {
       score: { home_sets: 0, away_sets: 0, set_details: [] },
     };
 
-    const { data, error } = await supabase
+    let { data, error } = await supabase
       .from("matches")
       .insert([newMatchPayload])
       .select()
       .single();
+
+    // Compatibilidad: si la tabla aún no tiene la columna "category", reintentamos sin ella.
+    if (error && /category/i.test(error.message)) {
+      const { category: _omit, ...rest } = newMatchPayload as Record<string, unknown>;
+      ({ data, error } = await supabase.from("matches").insert([rest]).select().single());
+    }
 
     if (error) {
       console.error("Error al agregar partido en Supabase:", error);
@@ -228,6 +244,8 @@ export function StoreProvider({ children }: { children: ReactNode }) {
   const value = useMemo<StoreCtx>(
     () => ({
       matches,
+      selectedCategory,
+      setSelectedCategory,
       addMatch,
       saveResult,
       resetData,
@@ -240,7 +258,7 @@ export function StoreProvider({ children }: { children: ReactNode }) {
       venues,
       sponsors,
     }),
-    [matches, addMatch, saveResult, resetData, deleteMatch, updateMatchDetails, updateTeam, teams, players, venues]
+    [matches, selectedCategory, addMatch, saveResult, resetData, deleteMatch, updateMatchDetails, updateTeam, saveRoster, teams, players, venues]
   );
 
   return <Ctx.Provider value={value}>{children}</Ctx.Provider>;
