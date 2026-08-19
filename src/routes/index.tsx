@@ -85,10 +85,19 @@ function Home() {
             />
             <div className="relative">
               <div className="mb-5 flex items-center gap-3">
-                <img
-                  src="/mamba-mark-gold.png"
-                  alt="Logo LIVOCOM"
-                  className="h-12 w-12 object-contain drop-shadow-[0_2px_6px_rgba(0,0,0,0.5)]"
+                {/* Logo con máscara para tomar el color de acento según la rama */}
+                <div
+                  className="h-12 w-12 shrink-0 bg-primary transition-colors drop-shadow-[0_2px_6px_rgba(0,0,0,0.5)]"
+                  style={{
+                    WebkitMaskImage: `url('/mamba-mark-gold.png')`,
+                    WebkitMaskSize: "contain",
+                    WebkitMaskRepeat: "no-repeat",
+                    WebkitMaskPosition: "center",
+                    maskImage: `url('/mamba-mark-gold.png')`,
+                    maskSize: "contain",
+                    maskRepeat: "no-repeat",
+                    maskPosition: "center",
+                  }}
                 />
                 <div className="min-w-0">
                   <div className="text-[11px] font-bold uppercase tracking-[0.2em] text-primary">
@@ -213,7 +222,7 @@ function Home() {
         </section>
 
         {/* ABOUT */}
-        <section className="grid gap-4 sm:grid-cols-[2fr_1fr]">
+        <section>
           <Card className="p-6">
             <h2 className="mb-2 text-xs font-bold uppercase tracking-[0.2em] text-primary">
               Sobre el torneo
@@ -244,34 +253,6 @@ function Home() {
               </span>
             </div>
           </Card>
-        </section>
-
-        {/* CONTACTO */}
-        <section className="grid gap-3 sm:grid-cols-2">
-          <a
-            href="https://instagram.com/volleyball.melipilla"
-            target="_blank"
-            rel="noreferrer"
-            className="flex items-center gap-4 rounded-xl border bg-card p-5 transition-all hover:-translate-y-0.5 hover:border-primary"
-          >
-            <Instagram className="h-6 w-6 shrink-0 text-primary" />
-            <div className="min-w-0">
-              <div className="text-sm font-black uppercase tracking-tight">Instagram oficial</div>
-              <p className="truncate text-xs text-muted-foreground">@volleyball.melipilla</p>
-            </div>
-          </a>
-          <a
-            href="https://api.whatsapp.com/send?phone=56974203763"
-            target="_blank"
-            rel="noreferrer"
-            className="flex items-center gap-4 rounded-xl border bg-card p-5 transition-all hover:-translate-y-0.5 hover:border-primary"
-          >
-            <MessageCircle className="h-6 w-6 shrink-0 text-primary" />
-            <div className="min-w-0">
-              <div className="text-sm font-black uppercase tracking-tight">WhatsApp · Bases</div>
-              <p className="truncate text-xs text-muted-foreground">+569 7420 3763</p>
-            </div>
-          </a>
         </section>
 
         {/* CONTACTO */}
