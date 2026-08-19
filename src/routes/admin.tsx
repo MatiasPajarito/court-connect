@@ -9,7 +9,7 @@ import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Lock, Plus, Save, Trash2 } from "lucide-react";
+import { Lock, Plus, Save, Trash2, Users } from "lucide-react";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import {
   Select,
@@ -21,12 +21,13 @@ import {
 import { TeamLogo } from "@/components/team-logo";
 import { useStore } from "@/lib/store";
 import type { Match, SetDetail } from "@/lib/types";
+import { type Category, teamCategory, matchCategory, CATEGORY_LABELS } from "@/lib/category";
 import { computePointsForMatch, isDecidingSetIndex, validateScoreSheet } from "@/lib/standings";
 
 export const Route = createFileRoute("/admin")({
   component: Admin,
   head: () => ({
-    meta: [{ title: "Backoffice · Copa Interurbana" }, { name: "robots", content: "noindex" }],
+    meta: [{ title: "Backoffice · LIVOCOM" }, { name: "robots", content: "noindex" }],
   }),
 });
 
@@ -35,6 +36,7 @@ const ADMIN_PASS = "admin";
 function Admin() {
   const [ok, setOk] = useState(false);
   const [pass, setPass] = useState("");
+  const { selectedCategory } = useStore();
 
   if (!ok) {
     return (
@@ -44,9 +46,9 @@ function Admin() {
             <div className="mx-auto mb-2 grid h-12 w-12 place-items-center rounded-full bg-primary text-primary-foreground">
               <Lock className="h-5 w-5" />
             </div>
-            <h1 className="text-lg font-black uppercase tracking-tight">Acceso administrador</h1>
+            <h1 className="text-lg font-black uppercase tracking-tight">Acceso Administrador</h1>
             <p className="text-xs text-muted-foreground">
-              Ingresa la clave de la organización (demo: admin)
+              Ingresa la clave de la organización LIVOCOM (demo: admin)
             </p>
           </div>
           <Card className="space-y-3 p-4">
@@ -79,12 +81,17 @@ function Admin() {
     <AppShell>
       <Tabs defaultValue="digitalizar">
         <div className="mb-3 flex flex-wrap items-center justify-between gap-2">
-          <h1 className="text-xl font-black uppercase tracking-tight sm:text-2xl">Backoffice</h1>
+          <div>
+            <h1 className="text-xl font-black uppercase tracking-tight sm:text-2xl">Backoffice</h1>
+            <p className="text-xs text-muted-foreground">
+              Administrando rama: <strong className="text-primary">{CATEGORY_LABELS[selectedCategory]}</strong>
+            </p>
+          </div>
           <TabsList>
             <TabsTrigger value="digitalizar">Digitalizar</TabsTrigger>
             <TabsTrigger value="programar">Programar</TabsTrigger>
-            <TabsTrigger value="equipos">Equipos</TabsTrigger>
-            <TabsTrigger value="jugadores">Planteles</TabsTrigger>
+            <TabsTrigger value="equipos">Clubes</TabsTrigger>
+            <TabsTrigger value="jugadores">Planteles (O-2 bis)</TabsTrigger>
           </TabsList>
         </div>
 
@@ -106,23 +113,29 @@ function Admin() {
 }
 
 function DigitalizarTab() {
-  const { matches } = useStore();
+  const { matches, selectedCategory } = useStore();
   const [selected, setSelected] = useState<Match | null>(null);
   const [showFinished, setShowFinished] = useState(false);
 
+  // Filtramos los partidos por la categoría activa en el header
+  const categoryMatches = useMemo(
+    () => matches.filter((m) => matchCategory(m) === selectedCategory),
+    [matches, selectedCategory],
+  );
+
   const pending = useMemo(
     () =>
-      matches
+      categoryMatches
         .filter((m) => m.status !== "finished")
         .sort((a, b) => (a.datetime > b.datetime ? 1 : -1)),
-    [matches],
+    [categoryMatches],
   );
   const finished = useMemo(
     () =>
-      matches
+      categoryMatches
         .filter((m) => m.status === "finished")
         .sort((a, b) => (a.datetime < b.datetime ? 1 : -1)),
-    [matches],
+    [categoryMatches],
   );
   const list = showFinished ? finished : pending;
 
@@ -131,8 +144,8 @@ function DigitalizarTab() {
       <div className="flex items-center justify-between gap-2">
         <p className="text-sm text-muted-foreground">
           {showFinished
-            ? `${finished.length} partidos finalizados.`
-            : `${pending.length} partidos pendientes.`}
+            ? `${finished.length} partidos finalizados (${CATEGORY_LABELS[selectedCategory]}).`
+            : `${pending.length} partidos pendientes (${CATEGORY_LABELS[selectedCategory]}).`}
         </p>
         <Button variant="outline" size="sm" onClick={() => setShowFinished((v) => !v)}>
           {showFinished ? "Ver pendientes" : "Editar finalizados"}
@@ -142,8 +155,8 @@ function DigitalizarTab() {
         {list.length === 0 && (
           <p className="py-6 text-center text-sm text-muted-foreground">
             {showFinished
-              ? "Todavía no hay partidos finalizados."
-              : "No quedan partidos pendientes. 🎉"}
+              ? `No hay partidos finalizados en ${CATEGORY_LABELS[selectedCategory]}.`
+              : `No quedan partidos pendientes en ${CATEGORY_LABELS[selectedCategory]}. 🎉`}
           </p>
         )}
         {list.map((m) => (
@@ -216,7 +229,7 @@ function PendingMatchRow({ match, onSelect }: { match: Match; onSelect: () => vo
 }
 
 function ScoreEditor({ match, onClose }: { match: Match; onClose: () => void }) {
-  const { saveResult, teams, deleteMatch, updateMatchDetails } = useStore();
+  const { saveResult, teams, deleteMatch, updateMatchDetails, players } = useStore();
   
   const home = teams.find((t) => t.id === match.home_team_id) || {
     id: "tbd_h",
@@ -233,6 +246,11 @@ function ScoreEditor({ match, onClose }: { match: Match; onClose: () => void }) 
     city: "",
   };
 
+  const availableTeams = useMemo(() => {
+    const cat = matchCategory(match);
+    return teams.filter((t) => teamCategory(t) === cat);
+  }, [teams, match]);
+
   const isBestOf5 = match.phase !== "regular";
   const setsToWin = isBestOf5 ? 3 : 2;
   const maxSets = isBestOf5 ? 5 : 3;
@@ -242,6 +260,17 @@ function ScoreEditor({ match, onClose }: { match: Match; onClose: () => void }) 
       ? match.score.set_details
       : Array.from({ length: setsToWin }, (_, i) => ({ set: i + 1, home: 0, away: 0 })),
   );
+
+  const [mvpId, setMvpId] = useState<string>(match.mvp_player_id || "none");
+
+  const matchPlayers = useMemo(() => {
+    return players.filter(
+      (p) => 
+        (p.team_id === match.home_team_id || p.team_id === match.away_team_id) && 
+        p.name && 
+        p.name.trim() !== ""
+    );
+  }, [players, match.home_team_id, match.away_team_id]);
 
   const totals = sets.reduce(
     (acc, s) => {
@@ -301,7 +330,7 @@ function ScoreEditor({ match, onClose }: { match: Match; onClose: () => void }) 
             </div>
           </SelectTrigger>
           <SelectContent>
-            {teams.map((t) => (
+            {availableTeams.map((t) => (
               <SelectItem key={t.id} value={t.id}>{t.name}</SelectItem>
             ))}
           </SelectContent>
@@ -324,7 +353,7 @@ function ScoreEditor({ match, onClose }: { match: Match; onClose: () => void }) 
             </div>
           </SelectTrigger>
           <SelectContent>
-            {teams.map((t) => (
+            {availableTeams.map((t) => (
               <SelectItem key={t.id} value={t.id}>{t.name}</SelectItem>
             ))}
           </SelectContent>
@@ -387,15 +416,39 @@ function ScoreEditor({ match, onClose }: { match: Match; onClose: () => void }) 
           {pts.home} – {pts.away}
         </span>
       </div>
+
+      {matchDecided && (
+        <div className="space-y-1.5 rounded-md border border-primary/20 bg-primary/5 p-3">
+          <Label className="text-xs font-bold uppercase text-primary">MVP del Partido</Label>
+          <Select onValueChange={setMvpId} value={mvpId}>
+            <SelectTrigger className="mt-1 h-9 bg-background">
+              <SelectValue placeholder="Seleccionar jugador destacado..." />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="none">Ninguno / Sin definir</SelectItem>
+              {matchPlayers.map((p) => {
+                const t = teams.find((team) => team.id === p.team_id);
+                return (
+                  <SelectItem key={p.id} value={p.id}>
+                    {p.number} - {p.name} ({t?.short_name || t?.name})
+                  </SelectItem>
+                );
+              })}
+            </SelectContent>
+          </Select>
+        </div>
+      )}
+
       <Button
         className="w-full"
         disabled={!canSave}
         onClick={() => {
-          saveResult(match.id, sets);
+          const finalMvp = mvpId === "none" ? null : mvpId;
+          saveResult(match.id, sets, finalMvp);
           toast.success(
             match.status === "finished"
-              ? "Resultado corregido. Tabla recalculada."
-              : "Resultado guardado. Tabla recalculada.",
+              ? "Resultado y MVP corregidos."
+              : "Resultado y MVP guardados.",
           );
           onClose();
         }}
@@ -441,11 +494,12 @@ function ScoreEditor({ match, onClose }: { match: Match; onClose: () => void }) 
 
 const scheduleSchema = z
   .object({
+    category: z.enum(["varon", "damas"]),
     matchday: z.coerce.number().int().min(1),
     datetime: z.string().min(1, "Requerido"),
-    home_team_id: z.string().min(1),
-    away_team_id: z.string().min(1),
-    venue_id: z.string().min(1),
+    home_team_id: z.string().min(1, "Selecciona local"),
+    away_team_id: z.string().min(1, "Selecciona visita"),
+    venue_id: z.string().min(1, "Selecciona sede"),
   })
   .refine((d) => d.home_team_id !== d.away_team_id, {
     message: "Local y visita deben ser distintos",
@@ -454,7 +508,7 @@ const scheduleSchema = z
 type ScheduleForm = z.infer<typeof scheduleSchema>;
 
 function ProgramarTab() {
-  const { teams, venues, addMatch } = useStore();
+  const { teams, venues, addMatch, selectedCategory } = useStore();
   const {
     register,
     handleSubmit,
@@ -464,11 +518,25 @@ function ProgramarTab() {
     formState: { errors },
   } = useForm<ScheduleForm>({
     resolver: zodResolver(scheduleSchema),
-    defaultValues: { matchday: 1 },
+    defaultValues: { matchday: 1, category: selectedCategory },
   });
+
+  const formCategory = watch("category") || selectedCategory;
+
+  useEffect(() => {
+    setValue("category", selectedCategory);
+    setValue("home_team_id", "");
+    setValue("away_team_id", "");
+  }, [selectedCategory, setValue]);
+
+  const availableTeams = useMemo(
+    () => teams.filter((t) => teamCategory(t) === formCategory),
+    [teams, formCategory],
+  );
 
   const onSubmit = (data: ScheduleForm) => {
     addMatch({
+      category: data.category,
       matchday: data.matchday,
       phase: "regular",
       datetime: new Date(data.datetime).toISOString(),
@@ -476,18 +544,39 @@ function ProgramarTab() {
       away_team_id: data.away_team_id,
       venue_id: data.venue_id,
     });
-    toast.success("Partido programado");
-    reset({ matchday: data.matchday });
+    toast.success(`Partido programado en ${CATEGORY_LABELS[data.category]}`);
+    reset({ matchday: data.matchday, category: data.category });
   };
 
   return (
     <Card className="p-4">
       <form onSubmit={handleSubmit(onSubmit)} className="space-y-3">
-        <div className="grid grid-cols-2 gap-3">
+        <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
+          <div>
+            <Label>Rama / Categoría</Label>
+            <Select
+              value={watch("category")}
+              onValueChange={(v: Category) => {
+                setValue("category", v, { shouldValidate: true });
+                setValue("home_team_id", "");
+                setValue("away_team_id", "");
+              }}
+            >
+              <SelectTrigger>
+                <SelectValue placeholder="Seleccionar categoría" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="varon">Varón TC</SelectItem>
+                <SelectItem value="damas">Damas TC</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+
           <div>
             <Label>Fecha (jornada)</Label>
-            <Input type="number" min={1} {...register("matchday")} />
+            <Input type="number" min={1} max={7} {...register("matchday")} />
           </div>
+
           <div>
             <Label>Fecha y hora</Label>
             <Input type="datetime-local" {...register("datetime")} />
@@ -499,7 +588,7 @@ function ProgramarTab() {
 
         <div className="grid grid-cols-2 gap-3">
           <div>
-            <Label>Local</Label>
+            <Label>Local ({CATEGORY_LABELS[formCategory]})</Label>
             <Select
               value={watch("home_team_id")}
               onValueChange={(v) => setValue("home_team_id", v, { shouldValidate: true })}
@@ -508,16 +597,20 @@ function ProgramarTab() {
                 <SelectValue placeholder="Equipo local" />
               </SelectTrigger>
               <SelectContent>
-                {teams.map((t) => (
+                {availableTeams.map((t) => (
                   <SelectItem key={t.id} value={t.id}>
                     {t.name}
                   </SelectItem>
                 ))}
               </SelectContent>
             </Select>
+            {errors.home_team_id && (
+              <p className="text-xs text-destructive">{errors.home_team_id.message}</p>
+            )}
           </div>
+
           <div>
-            <Label>Visita</Label>
+            <Label>Visita ({CATEGORY_LABELS[formCategory]})</Label>
             <Select
               value={watch("away_team_id")}
               onValueChange={(v) => setValue("away_team_id", v, { shouldValidate: true })}
@@ -526,7 +619,7 @@ function ProgramarTab() {
                 <SelectValue placeholder="Equipo visita" />
               </SelectTrigger>
               <SelectContent>
-                {teams.map((t) => (
+                {availableTeams.map((t) => (
                   <SelectItem key={t.id} value={t.id}>
                     {t.name}
                   </SelectItem>
@@ -556,6 +649,9 @@ function ProgramarTab() {
               ))}
             </SelectContent>
           </Select>
+          {errors.venue_id && (
+            <p className="text-xs text-destructive">{errors.venue_id.message}</p>
+          )}
         </div>
 
         <Button type="submit" className="w-full">
@@ -567,22 +663,37 @@ function ProgramarTab() {
 }
 
 function EquiposTab() {
-  const { teams, updateTeam } = useStore();
-  const [selectedId, setSelectedId] = useState<string>(teams[0]?.id || "");
+  const { teams, updateTeam, selectedCategory } = useStore();
+  
+  // Equipos filtrados por la categoría activa en el header
+  const categoryTeams = useMemo(
+    () => teams.filter((t) => teamCategory(t) === selectedCategory),
+    [teams, selectedCategory],
+  );
+
+  const [selectedId, setSelectedId] = useState<string>(categoryTeams[0]?.id || "");
   const selectedTeam = teams.find((t) => t.id === selectedId);
 
   const [name, setName] = useState("");
   const [shortName, setShortName] = useState("");
   const [city, setCity] = useState("");
   const [logoUrl, setLogoUrl] = useState("");
+  const [category, setCategory] = useState<Category>("varon");
 
   useEffect(() => {
-  if (selectedTeam) {
-    setName(selectedTeam.name || "");
-    setShortName(selectedTeam.short_name || "");
-    setCity(selectedTeam.city || "");
-    setLogoUrl(selectedTeam.logo_url || "");
-  }
+    if (categoryTeams.length > 0 && !categoryTeams.some((t) => t.id === selectedId)) {
+      setSelectedId(categoryTeams[0].id);
+    }
+  }, [categoryTeams, selectedId]);
+
+  useEffect(() => {
+    if (selectedTeam) {
+      setName(selectedTeam.name || "");
+      setShortName(selectedTeam.short_name || "");
+      setCity(selectedTeam.city || "");
+      setLogoUrl(selectedTeam.logo_url || "");
+      setCategory(teamCategory(selectedTeam));
+    }
   }, [selectedTeam]);
 
   const handleSave = async (e: React.FormEvent) => {
@@ -595,19 +706,30 @@ function EquiposTab() {
         short_name: shortName,
         city,
         logo_url: logoUrl,
+        category,
       });
-      toast.success("Equipo actualizado. El calendario reflejará los cambios de inmediato.");
+      toast.success("Club actualizado correctamente.");
     } catch {
-      toast.error("Error al actualizar los datos del equipo.");
+      toast.error("Error al actualizar los datos del club.");
     }
   };
 
   return (
     <div className="grid gap-4 md:grid-cols-[250px_1fr]">
       <Card className="p-3 space-y-2 h-fit">
-        <Label className="text-xs font-bold uppercase text-muted-foreground">Clubes Inscritos</Label>
+        <div className="flex items-center justify-between">
+          <Label className="text-xs font-bold uppercase text-muted-foreground">
+            Clubes ({CATEGORY_LABELS[selectedCategory]})
+          </Label>
+          <span className="text-[10px] font-bold text-primary font-mono">{categoryTeams.length}/8</span>
+        </div>
         <div className="flex flex-col gap-1">
-          {teams.map((t) => (
+          {categoryTeams.length === 0 && (
+            <p className="text-xs text-muted-foreground py-2 text-center">
+              No hay clubes registrados en esta rama.
+            </p>
+          )}
+          {categoryTeams.map((t) => (
             <Button
               key={t.id}
               variant={t.id === selectedId ? "default" : "ghost"}
@@ -627,7 +749,7 @@ function EquiposTab() {
             <div>
               <h3 className="font-black text-lg uppercase tracking-tight">Editar Identidad del Club</h3>
               <p className="text-xs text-muted-foreground">
-                ID interno: <span className="font-mono">{selectedTeam.id}</span> (No reprograma partidos)
+                ID interno: <span className="font-mono">{selectedTeam.id}</span>
               </p>
             </div>
             <div className="flex items-center gap-2 bg-muted px-3 py-1.5 rounded-lg border">
@@ -637,8 +759,8 @@ function EquiposTab() {
           </div>
 
           <form onSubmit={handleSave} className="space-y-4">
-            <div className="grid gap-3 sm:grid-cols-2">
-              <div>
+            <div className="grid gap-3 sm:grid-cols-3">
+              <div className="sm:col-span-2">
                 <Label htmlFor="t-name">Nombre Oficial del Club</Label>
                 <Input
                   id="t-name"
@@ -648,6 +770,21 @@ function EquiposTab() {
                   required
                 />
               </div>
+              <div>
+                <Label htmlFor="t-cat">Categoría / Rama</Label>
+                <Select value={category} onValueChange={(v: Category) => setCategory(v)}>
+                  <SelectTrigger id="t-cat">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="varon">Varón TC</SelectItem>
+                    <SelectItem value="damas">Damas TC</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+            </div>
+
+            <div className="grid gap-3 sm:grid-cols-2">
               <div>
                 <Label htmlFor="t-short">Sigla / Nombre Corto</Label>
                 <Input
@@ -659,9 +796,6 @@ function EquiposTab() {
                   required
                 />
               </div>
-            </div>
-
-            <div className="grid gap-3 sm:grid-cols-2">
               <div>
                 <Label htmlFor="t-city">Ciudad / Comuna</Label>
                 <Input
@@ -672,20 +806,21 @@ function EquiposTab() {
                   required
                 />
               </div>
-              <div>
-                <Label htmlFor="t-logo">URL del Escudo / Logo (.png / .jpg)</Label>
-                <Input
-                  id="t-logo"
-                  value={logoUrl}
-                  onChange={(e) => setLogoUrl(e.target.value)}
-                  placeholder="https://images.unsplash.com/..."
-                />
-              </div>
+            </div>
+
+            <div>
+              <Label htmlFor="t-logo">Ruta o URL del Escudo (.png / .jpg)</Label>
+              <Input
+                id="t-logo"
+                value={logoUrl}
+                onChange={(e) => setLogoUrl(e.target.value)}
+                placeholder="/escudos/mambito.png o https://..."
+              />
             </div>
 
             <div className="flex justify-end pt-2">
               <Button type="submit" className="w-full sm:w-auto font-bold">
-                <Save className="mr-2 h-4 w-4" /> Guardar y Actualizar Fixture
+                <Save className="mr-2 h-4 w-4" /> Guardar Cambios
               </Button>
             </div>
           </form>
@@ -696,16 +831,33 @@ function EquiposTab() {
 }
 
 function JugadoresTab() {
-  const { teams, players, saveRoster } = useStore();
-  const [selectedId, setSelectedId] = useState<string>(teams[0]?.id || "");
+  const { teams, players, saveRoster, selectedCategory } = useStore();
+  
+  const positions = selectedCategory === "damas" 
+    ? ["Armadora", "Punta", "Central", "Opuesta", "Líbero"]
+    : ["Armador", "Punta", "Central", "Opuesto", "Líbero"];
+
+  // Filtrar clubes por la rama seleccionada
+  const categoryTeams = useMemo(
+    () => teams.filter((t) => teamCategory(t) === selectedCategory),
+    [teams, selectedCategory],
+  );
+
+  const [selectedId, setSelectedId] = useState<string>(categoryTeams[0]?.id || "");
   const selectedTeam = teams.find((t) => t.id === selectedId);
+
+  useEffect(() => {
+    if (categoryTeams.length > 0 && !categoryTeams.some((t) => t.id === selectedId)) {
+      setSelectedId(categoryTeams[0].id);
+    }
+  }, [categoryTeams, selectedId]);
 
   // Generamos siempre 20 espacios fijos
   const [roster, setRoster] = useState(() => Array.from({ length: 20 }, (_, i) => ({
     number: i + 1, name: "", rut: "", position: ""
   })));
 
-  // Cuando cambias de equipo, cargamos sus jugadores en sus respectivos números
+  // Cargar jugadores del equipo en sus números respectivos
   useEffect(() => {
     if (!selectedId) return;
     const teamPlayers = players.filter((p) => p.team_id === selectedId);
@@ -742,9 +894,19 @@ function JugadoresTab() {
   return (
     <div className="grid gap-4 md:grid-cols-[250px_1fr]">
       <Card className="p-3 space-y-2 h-fit">
-        <Label className="text-xs font-bold uppercase text-muted-foreground">Clubes Inscritos</Label>
+        <div className="flex items-center justify-between">
+          <Label className="text-xs font-bold uppercase text-muted-foreground">
+            Clubes ({CATEGORY_LABELS[selectedCategory]})
+          </Label>
+          <Users className="h-3.5 w-3.5 text-muted-foreground" />
+        </div>
         <div className="flex flex-col gap-1">
-          {teams.map((t) => (
+          {categoryTeams.length === 0 && (
+            <p className="text-xs text-muted-foreground py-2 text-center">
+              No hay clubes registrados en esta rama.
+            </p>
+          )}
+          {categoryTeams.map((t) => (
             <Button
               key={t.id}
               variant={t.id === selectedId ? "default" : "ghost"}
@@ -764,7 +926,7 @@ function JugadoresTab() {
             <div>
               <h3 className="font-black text-lg uppercase tracking-tight">Planilla O-2 bis</h3>
               <p className="text-xs text-muted-foreground">
-                20 cupos habilitados por torneo para <strong className="text-primary">{selectedTeam.name}</strong>.
+                20 cupos habilitados para <strong className="text-primary">{selectedTeam.name}</strong> ({CATEGORY_LABELS[teamCategory(selectedTeam)]}).
               </p>
             </div>
             <Button onClick={handleSave} className="font-bold">
@@ -790,7 +952,7 @@ function JugadoresTab() {
                     </td>
                     <td className="px-4 py-2">
                       <Input 
-                        placeholder="Ej: Matías Pajarito" 
+                        placeholder="Nombre completo" 
                         value={slot.name} 
                         onChange={(e) => updateSlot(index, "name", e.target.value)}
                         className="h-8 border-transparent hover:border-input focus:border-input bg-transparent"
@@ -810,11 +972,9 @@ function JugadoresTab() {
                           <SelectValue placeholder="Seleccionar..." />
                         </SelectTrigger>
                         <SelectContent>
-                          <SelectItem value="Armador">Armador</SelectItem>
-                          <SelectItem value="Punta">Punta</SelectItem>
-                          <SelectItem value="Central">Central</SelectItem>
-                          <SelectItem value="Opuesto">Opuesto</SelectItem>
-                          <SelectItem value="Líbero">Líbero</SelectItem>
+                          {positions.map((pos) => (
+                            <SelectItem key={pos} value={pos}>{pos}</SelectItem>
+                          ))}
                         </SelectContent>
                       </Select>
                     </td>
@@ -826,7 +986,7 @@ function JugadoresTab() {
           
           <div className="p-4 border-t bg-muted/30">
             <p className="text-xs text-muted-foreground text-center">
-              Los números asignados en esta planilla deben coincidir con las camisetas usadas en cancha. Las casillas vacías no se guardarán en la base de datos.
+              Los números asignados en esta planilla deben coincidir con las camisetas usadas en cancha.
             </p>
           </div>
         </Card>

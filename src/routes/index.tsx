@@ -244,26 +244,34 @@ function Home() {
               </span>
             </div>
           </Card>
+        </section>
 
-          <Card className="flex flex-col justify-between gap-3 border-secondary bg-secondary p-6 text-secondary-foreground">
-            <div>
-              <div className="text-[11px] font-bold uppercase tracking-[0.2em] text-primary">
-                Organiza
-              </div>
-              <div className="mt-1 text-xl font-black">
-                Mamba Club Volley Melipilla
-              </div>
-              <p className="mt-2 text-xs text-secondary-foreground/70">
-                Los colores oficiales — blanco, dorado y negro — visten la
-                cancha y esta plataforma.
-              </p>
+        {/* CONTACTO */}
+        <section className="grid gap-3 sm:grid-cols-2">
+          <a
+            href="https://instagram.com/volleyball.melipilla"
+            target="_blank"
+            rel="noreferrer"
+            className="flex items-center gap-4 rounded-xl border bg-card p-5 transition-all hover:-translate-y-0.5 hover:border-primary"
+          >
+            <Instagram className="h-6 w-6 shrink-0 text-primary" />
+            <div className="min-w-0">
+              <div className="text-sm font-black uppercase tracking-tight">Instagram oficial</div>
+              <p className="truncate text-xs text-muted-foreground">@volleyball.melipilla</p>
             </div>
-            <div className="flex gap-1.5">
-              <span className="h-6 flex-1 rounded bg-white ring-1 ring-primary/30" />
-              <span className="h-6 flex-1 rounded bg-primary" />
-              <span className="h-6 flex-1 rounded bg-black ring-1 ring-primary/30" />
+          </a>
+          <a
+            href="https://api.whatsapp.com/send?phone=56974203763"
+            target="_blank"
+            rel="noreferrer"
+            className="flex items-center gap-4 rounded-xl border bg-card p-5 transition-all hover:-translate-y-0.5 hover:border-primary"
+          >
+            <MessageCircle className="h-6 w-6 shrink-0 text-primary" />
+            <div className="min-w-0">
+              <div className="text-sm font-black uppercase tracking-tight">WhatsApp · Bases</div>
+              <p className="truncate text-xs text-muted-foreground">+569 7420 3763</p>
             </div>
-          </Card>
+          </a>
         </section>
 
         {/* CONTACTO */}

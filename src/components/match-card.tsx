@@ -1,9 +1,9 @@
-import { CalendarDays, MapPin, Navigation } from "lucide-react";
+import { CalendarDays, MapPin, Navigation, Star } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Card } from "@/components/ui/card";
 import { TeamLogo } from "@/components/team-logo";
 import type { Match } from "@/lib/types";
-import { useTeam, useVenue } from "@/lib/store";
+import { useTeam, useVenue, useStore } from "@/lib/store";
 
 function fmtDate(iso: string) {
   const d = new Date(iso);
@@ -29,6 +29,9 @@ export function MatchCard({
   const home = useTeam(match.home_team_id);
   const away = useTeam(match.away_team_id);
   const venue = useVenue(match.venue_id);
+  
+  // Importamos players y teams completos para buscar al MVP
+  const { players, teams } = useStore();
 
   // 1. Respaldo seguro para partidos de playoffs donde los equipos aún no están definidos en la base de datos
   const homeTeam = home || {
@@ -48,6 +51,10 @@ export function MatchCard({
   };
 
   const finished = match.status === "finished";
+
+  // Buscar datos del MVP si el partido ya terminó y tiene uno asignado
+  const mvpPlayer = match.mvp_player_id ? players.find((p) => p.id === match.mvp_player_id) : null;
+  const mvpTeam = mvpPlayer ? teams.find((t) => t.id === mvpPlayer.team_id) : null;
 
   // 2. Coordenadas seguras para evitar el error "Cannot read properties of undefined (reading 'lat')"
   const lat = (venue as any)?.lat ?? venue?.coordinates?.lat ?? 0;
@@ -123,6 +130,16 @@ export function MatchCard({
               {s.home}–{s.away}
             </span>
           ))}
+        </div>
+      )}
+
+      {/* BLOQUE DEL MVP PARPADEANTE */}
+      {finished && mvpPlayer && mvpTeam && (
+        <div className="mt-3 flex justify-center border-t border-border/40 pt-3">
+          <div className="inline-flex animate-pulse items-center gap-1.5 rounded-full border border-primary/30 bg-primary/10 px-3 py-1 text-[11px] font-black uppercase tracking-wide text-primary shadow-sm">
+            <Star className="h-3.5 w-3.5 fill-primary" />
+            MVP: {mvpPlayer.name} · {mvpTeam.short_name || mvpTeam.name}
+          </div>
         </div>
       )}
 

@@ -27,10 +27,19 @@ export function AppShell({ children }: { children: ReactNode }) {
             aria-label="Ir al inicio"
           >
             <div className="grid h-9 w-9 shrink-0 place-items-center rounded-md bg-black/25 p-1 ring-1 ring-primary/40">
-              <img
-                src="/mamba-mark-gold.png"
-                alt=""
-                className="h-full w-full object-contain"
+              {/* Aquí aplicamos la máscara para que el logo tome el color dinámico */}
+              <div
+                className="h-full w-full bg-primary transition-colors"
+                style={{
+                  WebkitMaskImage: `url('/mamba-mark-gold.png')`,
+                  WebkitMaskSize: "contain",
+                  WebkitMaskRepeat: "no-repeat",
+                  WebkitMaskPosition: "center",
+                  maskImage: `url('/mamba-mark-gold.png')`,
+                  maskSize: "contain",
+                  maskRepeat: "no-repeat",
+                  maskPosition: "center",
+                }}
               />
             </div>
             <div className="min-w-0">

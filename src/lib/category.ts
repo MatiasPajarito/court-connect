@@ -10,7 +10,7 @@ export const CATEGORIES: { value: Category; label: string }[] = [
 export function categoryLabel(cat: Category) {
   return cat === "damas" ? "Damas TC" : "Varón TC";
 }
-
+ 
 /** Categoría de un club (por defecto varones, para datos antiguos sin categoría). */
 export function teamCategory(team: Pick<Team, "category"> | undefined): Category {
   return team?.category === "damas" ? "damas" : "varon";

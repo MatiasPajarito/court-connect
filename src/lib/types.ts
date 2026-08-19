@@ -66,6 +66,7 @@ export interface Match {
     home_sets: number;
     away_sets: number;
     set_details: SetDetail[];
+    mvp_player_id?: string | null;
   };
 }
 

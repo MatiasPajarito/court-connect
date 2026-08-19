@@ -17,7 +17,8 @@ interface StoreCtx {
   selectedCategory: Category;
   setSelectedCategory: (cat: Category) => void;
   addMatch: (m: Omit<Match, "id" | "score" | "status">) => Promise<void>;
-  saveResult: (id: string, setDetails: SetDetail[]) => Promise<void>;
+  // ACTULIZADO: Ahora acepta el mvpId como tercer parámetro
+  saveResult: (id: string, setDetails: SetDetail[], mvpId?: string | null) => Promise<void>;
   resetData: () => Promise<void>;
   teams: Team[];
   players: Player[];
@@ -132,7 +133,8 @@ export function StoreProvider({ children }: { children: ReactNode }) {
     }
   }, []);
 
-  const saveResult = useCallback(async (id: string, setDetails: SetDetail[]) => {
+  // ACTUALIZADO: Ahora recibe mvpId y lo manda a la base de datos
+  const saveResult = useCallback(async (id: string, setDetails: SetDetail[], mvpId: string | null = null) => {
     const totals = computeSetTotals(setDetails);
     const updatedScore: MatchScore = {
       home_sets: totals.home,
@@ -145,6 +147,7 @@ export function StoreProvider({ children }: { children: ReactNode }) {
       .update({
         status: "finished",
         score: updatedScore,
+        mvp_player_id: mvpId, // Guardamos el MVP en Supabase
       })
       .eq("id", id);
 
@@ -154,7 +157,7 @@ export function StoreProvider({ children }: { children: ReactNode }) {
       setMatches((prev) =>
         prev.map((m) =>
           m.id === id
-            ? { ...m, status: "finished", score: updatedScore }
+            ? { ...m, status: "finished", score: updatedScore, mvp_player_id: mvpId } // Actualizamos el estado local
             : m
         )
       );
